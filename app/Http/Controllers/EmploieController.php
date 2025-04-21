@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\DemandeDemploi;
 use App\Models\Emploie;
 use Illuminate\Http\Request;
 
-class DemandeEmploiController extends Controller
+class EmploieController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -16,9 +15,8 @@ class DemandeEmploiController extends Controller
      */
     public function index()
     {
-        // $demandes = DemandeDemploi::all();
-        $demandes = DemandeDemploi::where('isDeleted', false)->get();
-        return response()->json($demandes, 200);
+        $emploies=Emploie::where('isDeleted', false)->get();
+        return response()->json($emploies, 200);
     }
 
     /**
@@ -67,9 +65,7 @@ class DemandeEmploiController extends Controller
         } else {
             $profilPath = "Aucun Image Entrer🙄";
         }
-
-        // Création de la demande
-        $demande = DemandeDemploi::create([
+        $emploie=Emploie::create([
             'nom_complet' => $request->nom_complet,
             'cin' => $request->cin,
             'tel' => $request->tel,
@@ -79,10 +75,7 @@ class DemandeEmploiController extends Controller
             'adresse' => $request->adresse,
             'profil' => $profilPath
         ]);
-
-
-
-        return response()->json($demande, 201);
+        return response()->json(['message' => 'nouveau emploie enregistrée avec succès','emploie' => $emploie],201);
     }
 
     /**
@@ -93,11 +86,13 @@ class DemandeEmploiController extends Controller
      */
     public function show($id)
     {
-        $demande = DemandeDemploi::where("isDeleted",false)->find($id);
-        if ($demande) {
-            return response()->json(['demande' => $demande],200);
+        $emploie=Emploie::where('isDeleted', false)->find($id);
+
+        if ($emploie) {
+            return response()->json(['emploie' => $emploie],200);
         }
-        return response()->json(['message' => 'demande Introuvable!'],404);
+        return response()->json(['message' => 'emploie Introuvable!'],404);
+       
     }
 
     /**
@@ -109,6 +104,7 @@ class DemandeEmploiController extends Controller
      */
     public function update(Request $request, $id)
     {
+       
         $request->validate([
             'nom_complet' => 'required|string|max:255',
             'cin' => 'required|string|max:20|unique:demandes_demplois',
@@ -119,9 +115,11 @@ class DemandeEmploiController extends Controller
             'adresse' => 'nullable|string',
             'profil' => 'nullable|file|mimes:jpg,png|max:2048'
         ]);
-        $demande = DemandeDemploi::findOrFail($id);
+    
+        $emploie = Emploie::where('isDeleted', false)->find($id);
+        if ($emploie) {
         // Upload des fichiers
-        
+
         if ($request->hasFile('copie_cin')) {
             $copieCin = $request->file('copie_cin');
             $imageName = time() . '.' . $copieCin->getClientOriginalExtension();
@@ -131,8 +129,6 @@ class DemandeEmploiController extends Controller
             $copieCinPath = "Aucun Image Entrer🙄";
         }
 
-
-
         if ($request->hasFile('copie_permis')) {
             $copiePermis = $request->file('copie_permis');
             $imageName = time() . '.' . $copiePermis->getClientOriginalExtension();
@@ -141,9 +137,6 @@ class DemandeEmploiController extends Controller
         } else {
             $copiePermisPath = "Aucun Image Entrer🙄";
         }
-
-
-
         if ($request->hasFile('profil')) {
             $profil = $request->file('profil');
             $imageName = time() . '.' . $profil->getClientOriginalExtension();
@@ -153,7 +146,8 @@ class DemandeEmploiController extends Controller
             $profilPath = "Aucun Image Entrer🙄";
         }
 
-        $demande->update([
+        
+        $emploie->update([
             'nom_complet' => $request->nom_complet,
             'cin' => $request->cin,
             'tel' => $request->tel,
@@ -162,11 +156,12 @@ class DemandeEmploiController extends Controller
             'copie_permis' => $copiePermisPath,
             'adresse' => $request->adresse,
             'profil' => $profilPath
-
         ]);
-
-        return response()->json($demande, 200);
+        return response()->json(['message' => 'modification d\'emploie enregistrée avec succès','emploie' => $emploie],200);
     }
+        return response()->json(['message' => 'emploie Introuvable!'],404);
+    }
+
 
     /**
      * Remove the specified resource from storage.
@@ -176,36 +171,16 @@ class DemandeEmploiController extends Controller
      */
     public function destroy($id)
     {
-        $demande = DemandeDemploi::find($id);
+        $emploie = Emploie::find($id);
 
-        if (!$demande) {
-            return response()->json(['message' => 'Demande non trouvée'], 404);
+        if (!$emploie) {
+            return response()->json(['message' => 'Emploie non trouvée'], 404);
         }
 
-        $demande->isDeleted = true;
-        $demande->save();
+        $emploie->isDeleted = true;
+        $emploie->save();
 
-        return response()->json(['message' => 'Demande supprimée avec succès']);
-    }
+        return response()->json(['message' => 'Emploie supprimée avec succès']);
     
-    //on vas ajouter une fonction pour envoyer les donnees du table demande d'emploie a la table laveur
-    public function accepterDemande($id)
-    {
-        $demande = DemandeDemploi::find($id);
-        if (!$demande) {
-            return response()->json(['message' => 'Demande non trouvée'], 404);
-        }
-        $demande = Emploie::create([
-            'nom_complet' => $demande->nom_complet,
-            'cin' => $demande->cin,
-            'tel' => $demande->tel,
-            'email' => $demande->email,
-            'copie_cin' => $demande->copie_cin,
-            'copie_permis' => $demande->copie_permis,
-            'adresse' => $demande->adresse,
-            'profil' => $demande->profil
-        ]);
-        return response()->json(['message' => 'Donnees envoyées avec succès'], 200);
     }
-
 }
