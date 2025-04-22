@@ -16,9 +16,14 @@ class DemandeEmploiController extends Controller
      */
     public function index()
     {
-        // $demandes = DemandeDemploi::all();
-        $demandes = DemandeDemploi::where('isDeleted', false)->get();
-        return response()->json($demandes, 200);
+        try {
+            // $demandes = DemandeDemploi::all();
+            $demandes = DemandeDemploi::where('isDeleted', false)->get();
+            return response()->json($demandes, 200);
+        } catch (\Throwable $th) {
+            // throw $th;
+            return response()->json(["message" => "erreur index demande d'emploie", $th], 408);
+        }
     }
 
     /**
@@ -29,60 +34,65 @@ class DemandeEmploiController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'nom_complet' => 'required|string|max:255',
-            'cin' => 'required|string|max:20|unique:demandes_demplois',
-            'tel' => 'required|string|max:20',
-            'email' => 'required|email|unique:demandes_demplois',
-            'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
-            'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
-            'adresse' => 'nullable|string',
-            'profil' => 'nullable|file|mimes:jpg,png|max:2048'
-        ]);
+        try {
+            $request->validate([
+                'nom_complet' => 'required|string|max:255',
+                'cin' => 'required|string|max:20|unique:demandes_demplois',
+                'tel' => 'required|string|max:20',
+                'email' => 'required|email|unique:demandes_demplois',
+                'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
+                'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
+                'adresse' => 'nullable|string',
+                'profil' => 'nullable|file|mimes:jpg,png|max:2048'
+            ]);
 
-        // Upload des fichiers
+            // Upload des fichiers
 
-        if ($request->hasFile('copie_cin')) {
-            $copieCin = $request->file('copie_cin');
-            $imageName = time() . '.' . $copieCin->getClientOriginalExtension();
-            $copieCin->move(public_path('images/employees/cin/'), $imageName);
-            $copieCinPath = "images/employees/cin/" . $imageName;
-        } else {
-            $copieCinPath = "Aucun Image Entrer🙄";
+            if ($request->hasFile('copie_cin')) {
+                $copieCin = $request->file('copie_cin');
+                $imageName = time() . '.' . $copieCin->getClientOriginalExtension();
+                $copieCin->move(public_path('images/employees/cin/'), $imageName);
+                $copieCinPath = "images/employees/cin/" . $imageName;
+            } else {
+                $copieCinPath = "Aucun Image Entrer🙄";
+            }
+
+            if ($request->hasFile('copie_permis')) {
+                $copiePermis = $request->file('copie_permis');
+                $imageName = time() . '.' . $copiePermis->getClientOriginalExtension();
+                $copiePermis->move(public_path('images/employees/permis/'), $imageName);
+                $copiePermisPath = "images/employees/permis/" . $imageName;
+            } else {
+                $copiePermisPath = "Aucun Image Entrer🙄";
+            }
+            if ($request->hasFile('profil')) {
+                $profil = $request->file('profil');
+                $imageName = time() . '.' . $profil->getClientOriginalExtension();
+                $profil->move(public_path('images/employees/profil/'), $imageName);
+                $profilPath = "images/employees/profil/" . $imageName;
+            } else {
+                $profilPath = "Aucun Image Entrer🙄";
+            }
+
+            // Création de la demande
+            $demande = DemandeDemploi::create([
+                'nom_complet' => $request->nom_complet,
+                'cin' => $request->cin,
+                'tel' => $request->tel,
+                'email' => $request->email,
+                'copie_cin' => $copieCinPath,
+                'copie_permis' => $copiePermisPath,
+                'adresse' => $request->adresse,
+                'profil' => $profilPath
+            ]);
+
+
+
+            return response()->json($demande, 201);
+        } catch (\Throwable $th) {
+            // throw $th;
+            return response()->json(["message" => "erreur store demande d'emploie", $th], 408);
         }
-
-        if ($request->hasFile('copie_permis')) {
-            $copiePermis = $request->file('copie_permis');
-            $imageName = time() . '.' . $copiePermis->getClientOriginalExtension();
-            $copiePermis->move(public_path('images/employees/permis/'), $imageName);
-            $copiePermisPath = "images/employees/permis/" . $imageName;
-        } else {
-            $copiePermisPath = "Aucun Image Entrer🙄";
-        }
-        if ($request->hasFile('profil')) {
-            $profil = $request->file('profil');
-            $imageName = time() . '.' . $profil->getClientOriginalExtension();
-            $profil->move(public_path('images/employees/profil/'), $imageName);
-            $profilPath = "images/employees/profil/" . $imageName;
-        } else {
-            $profilPath = "Aucun Image Entrer🙄";
-        }
-
-        // Création de la demande
-        $demande = DemandeDemploi::create([
-            'nom_complet' => $request->nom_complet,
-            'cin' => $request->cin,
-            'tel' => $request->tel,
-            'email' => $request->email,
-            'copie_cin' => $copieCinPath,
-            'copie_permis' => $copiePermisPath,
-            'adresse' => $request->adresse,
-            'profil' => $profilPath
-        ]);
-
-
-
-        return response()->json($demande, 201);
     }
 
     /**
@@ -93,11 +103,16 @@ class DemandeEmploiController extends Controller
      */
     public function show($id)
     {
-        $demande = DemandeDemploi::where("isDeleted",false)->find($id);
-        if ($demande) {
-            return response()->json(['demande' => $demande],200);
+        try {
+            $demande = DemandeDemploi::where("isDeleted", false)->find($id);
+            if ($demande) {
+                return response()->json(['demande' => $demande], 200);
+            }
+            return response()->json(['message' => 'demande Introuvable!'], 404);
+        } catch (\Throwable $th) {
+            // throw $th;
+            return response()->json(["message" => "erreur show demande d'emploie", $th], 408);
         }
-        return response()->json(['message' => 'demande Introuvable!'],404);
     }
 
     /**
@@ -109,63 +124,68 @@ class DemandeEmploiController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'nom_complet' => 'required|string|max:255',
-            'cin' => 'required|string|max:20|unique:demandes_demplois',
-            'tel' => 'required|string|max:20',
-            'email' => 'required|email|unique:demandes_demplois',
-            'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
-            'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
-            'adresse' => 'nullable|string',
-            'profil' => 'nullable|file|mimes:jpg,png|max:2048'
-        ]);
-        $demande = DemandeDemploi::findOrFail($id);
-        // Upload des fichiers
-        
-        if ($request->hasFile('copie_cin')) {
-            $copieCin = $request->file('copie_cin');
-            $imageName = time() . '.' . $copieCin->getClientOriginalExtension();
-            $copieCin->move(public_path('images/employees/cin/'), $imageName);
-            $copieCinPath = "images/employees/cin/" . $imageName;
-        } else {
-            $copieCinPath = "Aucun Image Entrer🙄";
+        try {
+            $request->validate([
+                'nom_complet' => 'required|string|max:255',
+                'cin' => 'required|string|max:20|unique:demandes_demplois',
+                'tel' => 'required|string|max:20',
+                'email' => 'required|email|unique:demandes_demplois',
+                'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
+                'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
+                'adresse' => 'nullable|string',
+                'profil' => 'nullable|file|mimes:jpg,png|max:2048'
+            ]);
+            $demande = DemandeDemploi::findOrFail($id);
+            // Upload des fichiers
+
+            if ($request->hasFile('copie_cin')) {
+                $copieCin = $request->file('copie_cin');
+                $imageName = time() . '.' . $copieCin->getClientOriginalExtension();
+                $copieCin->move(public_path('images/employees/cin/'), $imageName);
+                $copieCinPath = "images/employees/cin/" . $imageName;
+            } else {
+                $copieCinPath = "Aucun Image Entrer🙄";
+            }
+
+
+
+            if ($request->hasFile('copie_permis')) {
+                $copiePermis = $request->file('copie_permis');
+                $imageName = time() . '.' . $copiePermis->getClientOriginalExtension();
+                $copiePermis->move(public_path('images/employees/permis/'), $imageName);
+                $copiePermisPath = "images/employees/permis/" . $imageName;
+            } else {
+                $copiePermisPath = "Aucun Image Entrer🙄";
+            }
+
+
+
+            if ($request->hasFile('profil')) {
+                $profil = $request->file('profil');
+                $imageName = time() . '.' . $profil->getClientOriginalExtension();
+                $profil->move(public_path('images/employees/profil/'), $imageName);
+                $profilPath = "images/employees/profil/" . $imageName;
+            } else {
+                $profilPath = "Aucun Image Entrer🙄";
+            }
+
+            $demande->update([
+                'nom_complet' => $request->nom_complet,
+                'cin' => $request->cin,
+                'tel' => $request->tel,
+                'email' => $request->email,
+                'copie_cin' => $copieCinPath,
+                'copie_permis' => $copiePermisPath,
+                'adresse' => $request->adresse,
+                'profil' => $profilPath
+
+            ]);
+
+            return response()->json($demande, 200);
+        } catch (\Throwable $th) {
+            // throw $th;
+            return response()->json(["message" => "erreur modification demande d'emploie", $th], 408);
         }
-
-
-
-        if ($request->hasFile('copie_permis')) {
-            $copiePermis = $request->file('copie_permis');
-            $imageName = time() . '.' . $copiePermis->getClientOriginalExtension();
-            $copiePermis->move(public_path('images/employees/permis/'), $imageName);
-            $copiePermisPath = "images/employees/permis/" . $imageName;
-        } else {
-            $copiePermisPath = "Aucun Image Entrer🙄";
-        }
-
-
-
-        if ($request->hasFile('profil')) {
-            $profil = $request->file('profil');
-            $imageName = time() . '.' . $profil->getClientOriginalExtension();
-            $profil->move(public_path('images/employees/profil/'), $imageName);
-            $profilPath = "images/employees/profil/" . $imageName;
-        } else {
-            $profilPath = "Aucun Image Entrer🙄";
-        }
-
-        $demande->update([
-            'nom_complet' => $request->nom_complet,
-            'cin' => $request->cin,
-            'tel' => $request->tel,
-            'email' => $request->email,
-            'copie_cin' => $copieCinPath,
-            'copie_permis' => $copiePermisPath,
-            'adresse' => $request->adresse,
-            'profil' => $profilPath
-
-        ]);
-
-        return response()->json($demande, 200);
     }
 
     /**
@@ -176,36 +196,45 @@ class DemandeEmploiController extends Controller
      */
     public function destroy($id)
     {
-        $demande = DemandeDemploi::find($id);
+        try {
+            $demande = DemandeDemploi::find($id);
 
-        if (!$demande) {
-            return response()->json(['message' => 'Demande non trouvée'], 404);
+            if (!$demande) {
+                return response()->json(['message' => 'Demande non trouvée'], 404);
+            }
+
+            $demande->isDeleted = true;
+            $demande->save();
+
+            return response()->json(['message' => 'Demande supprimée avec succès']);
+        } catch (\Throwable $th) {
+            // throw $th;
+            return response()->json(["message" => "erreur suppression demande d'emploie", $th], 408);
         }
-
-        $demande->isDeleted = true;
-        $demande->save();
-
-        return response()->json(['message' => 'Demande supprimée avec succès']);
     }
-    
+
     //on vas ajouter une fonction pour envoyer les donnees du table demande d'emploie a la table laveur
     public function accepterDemande($id)
     {
-        $demande = DemandeDemploi::find($id);
-        if (!$demande) {
-            return response()->json(['message' => 'Demande non trouvée'], 404);
+        try {
+            $demande = DemandeDemploi::find($id);
+            if (!$demande) {
+                return response()->json(['message' => 'Demande non trouvée'], 404);
+            }
+            $demande = Emploie::create([
+                'nom_complet' => $demande->nom_complet,
+                'cin' => $demande->cin,
+                'tel' => $demande->tel,
+                'email' => $demande->email,
+                'copie_cin' => $demande->copie_cin,
+                'copie_permis' => $demande->copie_permis,
+                'adresse' => $demande->adresse,
+                'profil' => $demande->profil
+            ]);
+            return response()->json(['message' => 'Donnees envoyées avec succès'], 200);
+        } catch (\Throwable $th) {
+            // throw $th;
+            return response()->json(["message" => "erreur acceptation demande d'emploie", $th], 408);
         }
-        $demande = Emploie::create([
-            'nom_complet' => $demande->nom_complet,
-            'cin' => $demande->cin,
-            'tel' => $demande->tel,
-            'email' => $demande->email,
-            'copie_cin' => $demande->copie_cin,
-            'copie_permis' => $demande->copie_permis,
-            'adresse' => $demande->adresse,
-            'profil' => $demande->profil
-        ]);
-        return response()->json(['message' => 'Donnees envoyées avec succès'], 200);
     }
-
 }

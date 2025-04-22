@@ -15,8 +15,14 @@ class EmploieController extends Controller
      */
     public function index()
     {
-        $emploies=Emploie::where('isDeleted', false)->get();
+        try {
+            $emploies=Emploie::where('isDeleted', false)->get();
         return response()->json($emploies, 200);
+        } catch (\Throwable $th) {
+            // throw $th;
+            return response()->json(["message"=>"erreur index emploie",$th],408);
+        }
+        
     }
 
     /**
@@ -27,6 +33,7 @@ class EmploieController extends Controller
      */
     public function store(Request $request)
     {
+        try {
         $request->validate([
             'nom_complet' => 'required|string|max:255',
             'cin' => 'required|string|max:20|unique:demandes_demplois',
@@ -76,6 +83,10 @@ class EmploieController extends Controller
             'profil' => $profilPath
         ]);
         return response()->json(['message' => 'nouveau emploie enregistrée avec succès','emploie' => $emploie],201);
+    } catch (\Throwable $th) {
+        //throw $th;
+        return response()->json(["message"=>"Erreur Store Emploie",$th],408);
+    }
     }
 
     /**
@@ -86,6 +97,7 @@ class EmploieController extends Controller
      */
     public function show($id)
     {
+        try {
         $emploie=Emploie::where('isDeleted', false)->find($id);
 
         if ($emploie) {
@@ -93,6 +105,11 @@ class EmploieController extends Controller
         }
         return response()->json(['message' => 'emploie Introuvable!'],404);
        
+            
+    } catch (\Throwable $th) {
+        //throw $th;
+        return response()->json(["message"=>"Erreur show emploie",$th], 408);
+    }
     }
 
     /**
@@ -104,7 +121,7 @@ class EmploieController extends Controller
      */
     public function update(Request $request, $id)
     {
-       
+       try{
         $request->validate([
             'nom_complet' => 'required|string|max:255',
             'cin' => 'required|string|max:20|unique:demandes_demplois',
@@ -160,6 +177,12 @@ class EmploieController extends Controller
         return response()->json(['message' => 'modification d\'emploie enregistrée avec succès','emploie' => $emploie],200);
     }
         return response()->json(['message' => 'emploie Introuvable!'],404);
+        
+            
+    } catch (\Throwable $th) {
+        //throw $th;
+        return response()->json(['message' => 'Erreur modification emploie',$th], 408);
+    }
     }
 
 
@@ -171,6 +194,7 @@ class EmploieController extends Controller
      */
     public function destroy($id)
     {
+        try{
         $emploie = Emploie::find($id);
 
         if (!$emploie) {
@@ -182,5 +206,10 @@ class EmploieController extends Controller
 
         return response()->json(['message' => 'Emploie supprimée avec succès']);
     
+            
+    } catch (\Throwable $th) {
+        //throw $th;
+        return response()->json(['message' => 'Erreur lors de la suppression de l\'emploie',$th], 408);
+    }
     }
 }

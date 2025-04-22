@@ -27,3 +27,4 @@ Route::apiResource('emploies', EmploieController::class);
 Route::post('/emploies/{id}', [EmploieController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
 
 
+        
