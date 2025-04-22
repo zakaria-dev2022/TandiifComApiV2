@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\DemandeEmploiController;
-use App\Http\Controllers\EmploieController;
+use App\Http\Controllers\Api\EmploieController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -19,12 +19,13 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// ************************************************************************************************************************
 Route::apiResource('demandes-emploi', DemandeEmploiController::class);
 Route::post('/demandes-emploi/{id}', [DemandeEmploiController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
 Route::post('/demandes-emploi/{id}/accepte', [DemandeEmploiController::class, 'accepterDemande']);//acceptation de demande d'emploie
 // ************************************************************************************************************************
 Route::apiResource('emploies', EmploieController::class);
 Route::post('/emploies/{id}', [EmploieController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
 
-
-        
