@@ -50,7 +50,7 @@ class DemandeEmploiController extends Controller
 
             if ($request->hasFile('copie_cin')) {
                 $copieCin = $request->file('copie_cin');
-                $imageName = time() . '.' . $copieCin->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $copieCin->getClientOriginalExtension();
                 $copieCin->move(public_path('images/employees/cin/'), $imageName);
                 $copieCinPath = "images/employees/cin/" . $imageName;
             } else {
@@ -59,7 +59,7 @@ class DemandeEmploiController extends Controller
 
             if ($request->hasFile('copie_permis')) {
                 $copiePermis = $request->file('copie_permis');
-                $imageName = time() . '.' . $copiePermis->getClientOriginalExtension();
+                $imageName = time() .$request->cin .  '.' . $copiePermis->getClientOriginalExtension();
                 $copiePermis->move(public_path('images/employees/permis/'), $imageName);
                 $copiePermisPath = "images/employees/permis/" . $imageName;
             } else {
@@ -67,7 +67,7 @@ class DemandeEmploiController extends Controller
             }
             if ($request->hasFile('profil')) {
                 $profil = $request->file('profil');
-                $imageName = time() . '.' . $profil->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
                 $profil->move(public_path('images/employees/profil/'), $imageName);
                 $profilPath = "images/employees/profil/" . $imageName;
             } else {
@@ -135,12 +135,15 @@ class DemandeEmploiController extends Controller
                 'adresse' => 'nullable|string',
                 'profil' => 'nullable|file|mimes:jpg,png|max:2048'
             ]);
-            $demande = DemandeDemploi::findOrFail($id);
+            $demande = DemandeDemploi::where('isDeleted', false)->findOrFail($id);
             // Upload des fichiers
 
+            if ($demande) {
+                
+          
             if ($request->hasFile('copie_cin')) {
                 $copieCin = $request->file('copie_cin');
-                $imageName = time() . '.' . $copieCin->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $copieCin->getClientOriginalExtension();
                 $copieCin->move(public_path('images/employees/cin/'), $imageName);
                 $copieCinPath = "images/employees/cin/" . $imageName;
             } else {
@@ -151,7 +154,7 @@ class DemandeEmploiController extends Controller
 
             if ($request->hasFile('copie_permis')) {
                 $copiePermis = $request->file('copie_permis');
-                $imageName = time() . '.' . $copiePermis->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $copiePermis->getClientOriginalExtension();
                 $copiePermis->move(public_path('images/employees/permis/'), $imageName);
                 $copiePermisPath = "images/employees/permis/" . $imageName;
             } else {
@@ -162,7 +165,7 @@ class DemandeEmploiController extends Controller
 
             if ($request->hasFile('profil')) {
                 $profil = $request->file('profil');
-                $imageName = time() . '.' . $profil->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
                 $profil->move(public_path('images/employees/profil/'), $imageName);
                 $profilPath = "images/employees/profil/" . $imageName;
             } else {
@@ -182,6 +185,12 @@ class DemandeEmploiController extends Controller
             ]);
 
             return response()->json($demande, 200);
+        }
+
+        else {
+            return response()->json(["message" => "Aucune demande trouvée"], 404);
+        }
+
         } catch (\Throwable $th) {
             // throw $th;
             return response()->json(["message" => "erreur modification demande d'emploie", $th], 408);
@@ -197,7 +206,7 @@ class DemandeEmploiController extends Controller
     public function destroy($id)
     {
         try {
-            $demande = DemandeDemploi::find($id);
+            $demande = DemandeDemploi::where('isDeleted', false)->find($id);
 
             if (!$demande) {
                 return response()->json(['message' => 'Demande non trouvée'], 404);
@@ -217,7 +226,7 @@ class DemandeEmploiController extends Controller
     public function accepterDemande($id)
     {
         try {
-            $demande = DemandeDemploi::find($id);
+            $demande = DemandeDemploi::where('isDeleted', false)->find($id);
             if (!$demande) {
                 return response()->json(['message' => 'Demande non trouvée'], 404);
             }

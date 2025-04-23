@@ -1,7 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\CommentaireController;
 use App\Http\Controllers\Api\DemandeEmploiController;
 use App\Http\Controllers\Api\EmploieController;
+use App\Http\Controllers\Api\ReservationController;
+use App\Http\Controllers\Api\ServiceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,5 +31,17 @@ Route::post('/demandes-emploi/{id}/accepte', [DemandeEmploiController::class, 'a
 // ************************************************************************************************************************
 Route::apiResource('emploies', EmploieController::class);
 Route::post('/emploies/{id}', [EmploieController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
+Route::apiResource('clients',ClientController::class);
+Route::post('/clients/{id}', [ClientController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
+Route::apiResource('services',ServiceController::class);
+Route::post('/services/{id}', [ServiceController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
+Route::apiResource('reservations',ReservationController::class);
+Route::post('/reservations/{id}', [ReservationController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
+Route::apiResource('commentaire',CommentaireController::class);
+Route::post('/commentaire/{id}', [CommentaireController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
 // ************************************************************************************************************************
 

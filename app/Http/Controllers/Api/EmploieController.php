@@ -48,7 +48,7 @@ class EmploieController extends Controller
     
             if ($request->hasFile('copie_cin')) {
                 $copieCin = $request->file('copie_cin');
-                $imageName = time() . '.' . $copieCin->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $copieCin->getClientOriginalExtension();
                 $copieCin->move(public_path('images/employees/cin/'), $imageName);
                 $copieCinPath = "images/employees/cin/" . $imageName;
             } else {
@@ -57,7 +57,7 @@ class EmploieController extends Controller
     
             if ($request->hasFile('copie_permis')) {
                 $copiePermis = $request->file('copie_permis');
-                $imageName = time() . '.' . $copiePermis->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $copiePermis->getClientOriginalExtension();
                 $copiePermis->move(public_path('images/employees/permis/'), $imageName);
                 $copiePermisPath = "images/employees/permis/" . $imageName;
             } else {
@@ -65,7 +65,7 @@ class EmploieController extends Controller
             }
             if ($request->hasFile('profil')) {
                 $profil = $request->file('profil');
-                $imageName = time() . '.' . $profil->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
                 $profil->move(public_path('images/employees/profil/'), $imageName);
                 $profilPath = "images/employees/profil/" . $imageName;
             } else {
@@ -138,7 +138,7 @@ class EmploieController extends Controller
     
             if ($request->hasFile('copie_cin')) {
                 $copieCin = $request->file('copie_cin');
-                $imageName = time() . '.' . $copieCin->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $copieCin->getClientOriginalExtension();
                 $copieCin->move(public_path('images/employees/cin/'), $imageName);
                 $copieCinPath = "images/employees/cin/" . $imageName;
             } else {
@@ -147,7 +147,7 @@ class EmploieController extends Controller
     
             if ($request->hasFile('copie_permis')) {
                 $copiePermis = $request->file('copie_permis');
-                $imageName = time() . '.' . $copiePermis->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $copiePermis->getClientOriginalExtension();
                 $copiePermis->move(public_path('images/employees/permis/'), $imageName);
                 $copiePermisPath = "images/employees/permis/" . $imageName;
             } else {
@@ -155,7 +155,7 @@ class EmploieController extends Controller
             }
             if ($request->hasFile('profil')) {
                 $profil = $request->file('profil');
-                $imageName = time() . '.' . $profil->getClientOriginalExtension();
+                $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
                 $profil->move(public_path('images/employees/profil/'), $imageName);
                 $profilPath = "images/employees/profil/" . $imageName;
             } else {
@@ -173,6 +173,7 @@ class EmploieController extends Controller
                 'adresse' => $request->adresse,
                 'profil' => $profilPath
             ]);
+            // $emploie->save();
             return response()->json(['message' => 'modification d\'emploie enregistrée avec succès','emploie' => $emploie],200);
         }
             return response()->json(['message' => 'emploie Introuvable!'],404);
@@ -193,7 +194,7 @@ class EmploieController extends Controller
     public function destroy($id)
     {
         try{
-            $emploie = Emploie::find($id);
+            $emploie = Emploie::where('isDeleted', false)->find($id);
     
             if (!$emploie) {
                 return response()->json(['message' => 'Emploie non trouvée'], 404);
