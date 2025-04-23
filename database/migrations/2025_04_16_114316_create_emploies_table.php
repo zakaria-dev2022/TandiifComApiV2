@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('emploies', function (Blueprint $table) {
             $table->id();
             $table->string('nom_complet');
+            $table->string('matricule')->nullable(); // sera généré automatiquement 
             $table->string('cin')->unique();
             $table->string('tel');
             $table->string('email')->unique();
