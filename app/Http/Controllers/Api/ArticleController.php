@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Service;
+use App\Models\Article;
 use Illuminate\Http\Request;
 
-class ServiceController extends Controller
+class ArticleController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -16,11 +16,11 @@ class ServiceController extends Controller
     public function index()
     {
         try {
-            $service = Service::where('isDeleted', false)->get();
-            return response()->json($service, 200);
+            $article = Article::where('isDeleted', false)->get();
+            return response()->json($article, 200);
         } catch (\Throwable $th) {
             // throw $th;
-            return response()->json(["message" => "erreur index service", $th], 408);
+            return response()->json(["message" => "erreur index article", $th], 408);
         }
     }
 
@@ -35,7 +35,7 @@ class ServiceController extends Controller
         try {
             try {
                 $request->validate([
-                    'nom' => 'required|string|max:255|unique:services',
+                    'nom' => 'required|string|max:255|unique:articles',
                     'description' => 'required|string',
                     'prix' => 'required|numeric',
                     'image' => 'nullable|file|mimes:jpg,png|max:2048'
@@ -51,28 +51,28 @@ class ServiceController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $imageName = time() . ' ' . $request->nom . '.' . $image->getClientOriginalExtension();
-                $image->move(public_path('images/services/'), $imageName);
-                $imagePath = "images/services/" . $imageName;
+                $image->move(public_path('images/articles/'), $imageName);
+                $imagePath = "images/articles/" . $imageName;
             } else {
                 $imagePath = "Aucun Image Entrer🙄";
             }
 
             try {
-                $service = Service::create([
+                $article = Article::create([
                     'nom' => $request->nom,
                     'description' => $request->description,
                     'prix' => $request->prix,
                     'image' => $imagePath
 
                 ]);
-                return response()->json(['message' => 'nouveau service enregistrée avec succès', 'service' => $service], 201);
+                return response()->json(['message' => 'nouveau article enregistrée avec succès', 'article' => $article], 201);
             } catch (\Throwable $th) {
                 //throw $th;
-                return response()->json(['erreur' => 'probleme de creation d\'eun service'], 408);
+                return response()->json(['erreur' => 'probleme de creation d\'eun article'], 408);
             }
         } catch (\Throwable $th) {
             //throw $th;
-            return response()->json(["message" => "Erreur Store Service", $th], 408);
+            return response()->json(["message" => "Erreur Store Article", $th], 408);
         }
     }
 
@@ -85,15 +85,15 @@ class ServiceController extends Controller
     public function show($id)
     {
         try {
-            $service = Service::where('isDeleted', false)->find($id);
+            $article = Article::where('isDeleted', false)->find($id);
 
-            if ($service) {
-                return response()->json(['service' => $service], 200);
+            if ($article) {
+                return response()->json(['article' => $article], 200);
             }
-            return response()->json(['message' => 'service Introuvable!'], 404);
+            return response()->json(['message' => 'article Introuvable!'], 404);
         } catch (\Throwable $th) {
             //throw $th;
-            return response()->json(["message" => "Erreur show service", $th], 408);
+            return response()->json(["message" => "Erreur show article", $th], 408);
         }
     }
 
@@ -109,8 +109,8 @@ class ServiceController extends Controller
         try {
             try {
                 $request->validate([
-                    // 'nom' => 'required|string|max:255|unique:services',
-                    'nom' => 'required|string|max:255|unique:services,nom,' . $id,
+                    // 'nom' => 'required|string|max:255|unique:articles',
+                    'nom' => 'required|string|max:255|unique:articles,nom,' . $id,
                     'description' => 'required|string',
                     'prix' => 'required|numeric',
                     'image' => 'nullable|file|mimes:jpg,png|max:2048'
@@ -120,36 +120,36 @@ class ServiceController extends Controller
                 return response()->json(['erreur' => 'l\'un des conditions non valide '], 408);
             }
 
-            $service = Service::where('isDeleted', false)->find($id);
-            if ($service) {
+            $article = Article::where('isDeleted', false)->find($id);
+            if ($article) {
                 // Upload des fichiers
 
                 if ($request->hasFile('image')) {
                     $image = $request->file('image');
                     $imageName = time() . ' ' . $request->nom . '.' . $image->getClientOriginalExtension();
-                    $image->move(public_path('images/services/'), $imageName);
-                    $imagePath = "images/services/" . $imageName;
+                    $image->move(public_path('images/articles/'), $imageName);
+                    $imagePath = "images/articles/" . $imageName;
                 } else {
                     $imagePath = "Aucun Image Entrer🙄";
                 }
                 try {
-                    $service->update([
+                    $article->update([
                         'nom' => $request->nom,
                         'description' => $request->description,
                         'prix' => $request->prix,
                         'image' => $imagePath
                     ]);
-                    // $service->save();
-                    return response()->json(['message' => 'modification d\'service enregistrée avec succès', 'service' => $service], 200);
+                    // $article->save();
+                    return response()->json(['message' => 'modification d\'article enregistrée avec succès', 'article' => $article], 200);
                 } catch (\Throwable $th) {
                     //throw $th;
-                    return response()->json(['erreur' => 'probleme dans la modification d\' un service '], 408);
+                    return response()->json(['erreur' => 'probleme dans la modification d\' un article '], 408);
                 }
             }
-            return response()->json(['message' => 'service Introuvable!'], 404);
+            return response()->json(['message' => 'article Introuvable!'], 404);
         } catch (\Throwable $th) {
             //throw $th;
-            return response()->json(['message' => 'Erreur modification service', $th], 408);
+            return response()->json(['message' => 'Erreur modification article', $th], 408);
         }
     }
 
@@ -162,19 +162,19 @@ class ServiceController extends Controller
     public function destroy($id)
     {
         try {
-            $service = Service::where('isDeleted', false)->find($id);
+            $article = Article::where('isDeleted', false)->find($id);
 
-            if (!$service) {
-                return response()->json(['message' => 'Service non trouvée'], 404);
+            if (!$article) {
+                return response()->json(['message' => 'Article non trouvée'], 404);
             }
 
-            $service->isDeleted = true;
-            $service->save();
+            $article->isDeleted = true;
+            $article->save();
 
-            return response()->json(['message' => 'Service supprimée avec succès']);
+            return response()->json(['message' => 'Article supprimée avec succès']);
         } catch (\Throwable $th) {
             //throw $th;
-            return response()->json(['message' => 'Erreur lors de la suppression de l\'service', $th], 408);
+            return response()->json(['message' => 'Erreur lors de la suppression de l\'article', $th], 408);
         }
     }
 }

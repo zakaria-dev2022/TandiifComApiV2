@@ -16,11 +16,11 @@ class EmploieController extends Controller
     public function index()
     {
         try {
-            $emploies=Emploie::where('isDeleted', false)->get();
-        return response()->json($emploies, 200);
+            $emploies = Emploie::where('isDeleted', false)->get();
+            return response()->json($emploies, 200);
         } catch (\Throwable $th) {
             // throw $th;
-            return response()->json(["message"=>"erreur index emploie",$th],408);
+            return response()->json(["message" => "erreur index emploie", $th], 408);
         }
     }
 
@@ -33,31 +33,35 @@ class EmploieController extends Controller
     public function store(Request $request)
     {
         try {
-            $request->validate([
-                'nom_complet' => 'required|string|max:255',
-                'cin' => 'required|string|max:20|unique:demandes_demplois',
-                'tel' => 'required|string|max:20',
-                'email' => 'required|email|unique:demandes_demplois',
-                'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
-                'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
-                'adresse' => 'nullable|string',
-                'profil' => 'nullable|file|mimes:jpg,png|max:2048'
-            ]);
-    
+            try {
+                $request->validate([
+                    'nom_complet' => 'required|string|max:255',
+                    'cin' => 'required|string|max:20|unique:emploies,cin',
+                    'tel' => 'required|string|max:20',
+                    'email' => 'required|email|unique:emploies,email',
+                    'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
+                    'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
+                    'adresse' => 'nullable|string',
+                    'profil' => 'nullable|file|mimes:jpg,png|max:2048'
+                ]);
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json(['erreur' => 'l\'un des conditions non valide '], 408);
+            }
             // Upload des fichiers
-    
+
             if ($request->hasFile('copie_cin')) {
                 $copieCin = $request->file('copie_cin');
-                $imageName = time() . $request->cin . '.' . $copieCin->getClientOriginalExtension();
+                $imageName = time() . ' ' . $request->cin . '.' . $copieCin->getClientOriginalExtension();
                 $copieCin->move(public_path('images/employees/cin/'), $imageName);
                 $copieCinPath = "images/employees/cin/" . $imageName;
             } else {
                 $copieCinPath = "Aucun Image Entrer🙄";
             }
-    
+
             if ($request->hasFile('copie_permis')) {
                 $copiePermis = $request->file('copie_permis');
-                $imageName = time() . $request->cin . '.' . $copiePermis->getClientOriginalExtension();
+                $imageName = time() . ' ' . $request->cin . '.' . $copiePermis->getClientOriginalExtension();
                 $copiePermis->move(public_path('images/employees/permis/'), $imageName);
                 $copiePermisPath = "images/employees/permis/" . $imageName;
             } else {
@@ -65,13 +69,15 @@ class EmploieController extends Controller
             }
             if ($request->hasFile('profil')) {
                 $profil = $request->file('profil');
-                $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
+                $imageName = time() . ' ' . $request->cin . '.' . $profil->getClientOriginalExtension();
                 $profil->move(public_path('images/employees/profil/'), $imageName);
                 $profilPath = "images/employees/profil/" . $imageName;
             } else {
                 $profilPath = "Aucun Image Entrer🙄";
             }
-            $emploie=Emploie::create([
+try{
+
+            $emploie = Emploie::create([
                 'nom_complet' => $request->nom_complet,
                 'cin' => $request->cin,
                 'tel' => $request->tel,
@@ -81,10 +87,14 @@ class EmploieController extends Controller
                 'adresse' => $request->adresse,
                 'profil' => $profilPath
             ]);
-            return response()->json(['message' => 'nouveau emploie enregistrée avec succès','emploie' => $emploie],201);
+            return response()->json(['message' => 'nouveau emploie enregistrée avec succès', 'emploie' => $emploie], 201);
         } catch (\Throwable $th) {
             //throw $th;
-            return response()->json(["message"=>"Erreur Store Emploie",$th],408);
+            return response()->json(['erreur' => 'probleme dans la creation d\'emploie '],408);
+        }
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json(["message" => "Erreur Store Emploie", $th], 408);
         }
     }
 
@@ -97,17 +107,15 @@ class EmploieController extends Controller
     public function show($id)
     {
         try {
-            $emploie=Emploie::where('isDeleted', false)->find($id);
-    
+            $emploie = Emploie::where('isDeleted', false)->find($id);
+
             if ($emploie) {
-                return response()->json(['emploie' => $emploie],200);
+                return response()->json(['emploie' => $emploie], 200);
             }
-            return response()->json(['message' => 'emploie Introuvable!'],404);
-           
-                
+            return response()->json(['message' => 'emploie Introuvable!'], 404);
         } catch (\Throwable $th) {
             //throw $th;
-            return response()->json(["message"=>"Erreur show emploie",$th], 408);
+            return response()->json(["message" => "Erreur show emploie", $th], 408);
         }
     }
 
@@ -120,68 +128,66 @@ class EmploieController extends Controller
      */
     public function update(Request $request, $id)
     {
-        try{
+        try {
             $request->validate([
                 'nom_complet' => 'required|string|max:255',
-                'cin' => 'required|string|max:20|unique:demandes_demplois',
+                'cin' => 'required|string|max:20|unique:emploies,cin,' . $id,
                 'tel' => 'required|string|max:20',
-                'email' => 'required|email|unique:demandes_demplois',
-                'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
+                'email' => 'required|email|unique:emploies,email,' . $id,
+                'copie_cin' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
                 'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
                 'adresse' => 'nullable|string',
                 'profil' => 'nullable|file|mimes:jpg,png|max:2048'
             ]);
-        
+
             $emploie = Emploie::where('isDeleted', false)->find($id);
             if ($emploie) {
-            // Upload des fichiers
-    
-            if ($request->hasFile('copie_cin')) {
-                $copieCin = $request->file('copie_cin');
-                $imageName = time() . $request->cin . '.' . $copieCin->getClientOriginalExtension();
-                $copieCin->move(public_path('images/employees/cin/'), $imageName);
-                $copieCinPath = "images/employees/cin/" . $imageName;
-            } else {
-                $copieCinPath = "Aucun Image Entrer🙄";
+                // Upload des fichiers
+
+                if ($request->hasFile('copie_cin')) {
+                    $copieCin = $request->file('copie_cin');
+                    $imageName = time() . ' ' . $request->cin . '.' . $copieCin->getClientOriginalExtension();
+                    $copieCin->move(public_path('images/employees/cin/'), $imageName);
+                    $copieCinPath = "images/employees/cin/" . $imageName;
+                } else {
+                    $copieCinPath = "Aucun Image Entrer🙄";
+                }
+
+                if ($request->hasFile('copie_permis')) {
+                    $copiePermis = $request->file('copie_permis');
+                    $imageName = time() . ' ' . $request->cin . '.' . $copiePermis->getClientOriginalExtension();
+                    $copiePermis->move(public_path('images/employees/permis/'), $imageName);
+                    $copiePermisPath = "images/employees/permis/" . $imageName;
+                } else {
+                    $copiePermisPath = "Aucun Image Entrer🙄";
+                }
+                if ($request->hasFile('profil')) {
+                    $profil = $request->file('profil');
+                    $imageName = time() . ' ' . $request->cin . '.' . $profil->getClientOriginalExtension();
+                    $profil->move(public_path('images/employees/profil/'), $imageName);
+                    $profilPath = "images/employees/profil/" . $imageName;
+                } else {
+                    $profilPath = "Aucun Image Entrer🙄";
+                }
+
+
+                $emploie->update([
+                    'nom_complet' => $request->nom_complet,
+                    'cin' => $request->cin,
+                    'tel' => $request->tel,
+                    'email' => $request->email,
+                    'copie_cin' => $copieCinPath,
+                    'copie_permis' => $copiePermisPath,
+                    'adresse' => $request->adresse,
+                    'profil' => $profilPath
+                ]);
+                // $emploie->save();
+                return response()->json(['message' => 'modification d\'emploie enregistrée avec succès', 'emploie' => $emploie], 200);
             }
-    
-            if ($request->hasFile('copie_permis')) {
-                $copiePermis = $request->file('copie_permis');
-                $imageName = time() . $request->cin . '.' . $copiePermis->getClientOriginalExtension();
-                $copiePermis->move(public_path('images/employees/permis/'), $imageName);
-                $copiePermisPath = "images/employees/permis/" . $imageName;
-            } else {
-                $copiePermisPath = "Aucun Image Entrer🙄";
-            }
-            if ($request->hasFile('profil')) {
-                $profil = $request->file('profil');
-                $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
-                $profil->move(public_path('images/employees/profil/'), $imageName);
-                $profilPath = "images/employees/profil/" . $imageName;
-            } else {
-                $profilPath = "Aucun Image Entrer🙄";
-            }
-    
-            
-            $emploie->update([
-                'nom_complet' => $request->nom_complet,
-                'cin' => $request->cin,
-                'tel' => $request->tel,
-                'email' => $request->email,
-                'copie_cin' => $copieCinPath,
-                'copie_permis' => $copiePermisPath,
-                'adresse' => $request->adresse,
-                'profil' => $profilPath
-            ]);
-            // $emploie->save();
-            return response()->json(['message' => 'modification d\'emploie enregistrée avec succès','emploie' => $emploie],200);
-        }
-            return response()->json(['message' => 'emploie Introuvable!'],404);
-            
-                
+            return response()->json(['message' => 'emploie Introuvable!'], 404);
         } catch (\Throwable $th) {
             //throw $th;
-            return response()->json(['message' => 'Erreur modification emploie',$th], 408);
+            return response()->json(['message' => 'Erreur modification emploie', $th], 408);
         }
     }
 
@@ -193,22 +199,18 @@ class EmploieController extends Controller
      */
     public function destroy($id)
     {
-        try{
+        try {
             $emploie = Emploie::where('isDeleted', false)->find($id);
-    
-            if (!$emploie) {
-                return response()->json(['message' => 'Emploie non trouvée'], 404);
+
+            if ($emploie) {
+                $emploie->isDeleted = true;
+                $emploie->save();
+                return response()->json(['message' => 'Emploie supprimée avec succès']);
             }
-    
-            $emploie->isDeleted = true;
-            $emploie->save();
-    
-            return response()->json(['message' => 'Emploie supprimée avec succès']);
-        
-                
+            return response()->json(['message' => 'Emploie non trouvée'], 404);
         } catch (\Throwable $th) {
             //throw $th;
-            return response()->json(['message' => 'Erreur lors de la suppression de l\'emploie',$th], 408);
+            return response()->json(['message' => 'Erreur lors de la suppression de l\'emploie', $th], 408);
         }
     }
 }

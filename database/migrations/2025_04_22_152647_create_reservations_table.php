@@ -17,7 +17,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('client_id'); 
             $table->unsignedBigInteger('service_id'); 
-            $table->date('date_reservation'); 
+            $table->date('date_reservation');
+            $table->time('heure');   
             $table->string('adresse'); 
             $table->boolean('isDeleted')->default(false);
             $table->timestamps();

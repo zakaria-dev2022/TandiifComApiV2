@@ -8,163 +8,175 @@ use Illuminate\Http\Request;
 
 class ClientController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-       try {
-        $clients=Client::where('isDeleted',false)->get();
-        return response()->json($clients, 200);
-       } catch (\Throwable $th) {
-        //throw $th;
-        return response()->json(['error' => 'An error index client.',$th], 500);
-       }
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-       try {
-        $request->validate([
-         'nom_complet' => 'required|string|max:255',
-         'cin' => 'required|string|max:20|unique:clients',
-         'tel' => 'required|string|max:20',
-         'email' => 'required|email|unique:clients',
-         'adresse' => 'required|string',
-         'profil' => 'nullable|file|mimes:jpg,png|max:2048'
-     ]);
-
-
-     if ($request->hasFile('profil')) {
-      $profil = $request->file('profil');
-      $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
-      $profil->move(public_path('images/clients/'), $imageName);
-      $profilPath = "images/clients/" . $imageName;
-      } else {
-      $profilPath = "Aucun Image Entrer🙄";
+   /**
+    * Display a listing of the resource.
+    *
+    * @return \Illuminate\Http\Response
+    */
+   public function index()
+   {
+      try {
+         $clients = Client::where('isDeleted', false)->get();
+         return response()->json($clients, 200);
+      } catch (\Throwable $th) {
+         //throw $th;
+         return response()->json(['error' => 'An error index client.', $th], 500);
       }
-      
-     $client = Client::create([
-      'nom_complet' => $request->nom_complet,
-      'cin' => $request->cin,
-      'tel' => $request->tel,
-      'email' => $request->email,
-      'adresse' => $request->adresse,
-      'profil' => $profilPath
-   ]);
-     return response()->json(['message' => $client], 201);
+   }
 
+   /**
+    * Store a newly created resource in storage.
+    *
+    * @param  \Illuminate\Http\Request  $request
+    * @return \Illuminate\Http\Response
+    */
+   public function store(Request $request)
+   {
+      try {
 
-       } catch (\Throwable $th) {
-        //throw $th;
-        return response()->json(['error' => 'An error store client.',$th], 500);
-       }
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-       try {
-        $client=Client::where('IsDeleted',false)->find($id);
-        if ($client) {
-         return response()->json(['message'=>$client],200);
-        }
-        else{
-         return response()->json(['message' => 'Client not found.'], 404);
-        }
-       } catch (\Throwable $th) {
-        //throw $th;
-        return response()->json(['error' => 'An error show client.',$th], 500);
-       }
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-       try {
+         try {
             $request->validate([
-             'nom_complet' => 'required|string|max:255',
-             'cin' => 'required|string|max:20|unique:clients',
-             'tel' => 'required|string|max:20',
-             'email' => 'required|email|unique:clients',
-             'adresse' => 'required|string',
-             'profil' => 'nullable|file|mimes:jpg,png|max:2048'
-         ]);
-
-         $client = Client::where('isDeleted', false)->find($id);
-            if ($client) {
-            // Upload de fichier
+               'nom_complet' => 'required|string|max:255',
+               'cin' => 'required|string|max:20|unique:clients',
+               'tel' => 'required|string|max:20',
+               'email' => 'required|email|unique:clients',
+               'adresse' => 'required|string',
+               'profil' => 'nullable|file|mimes:jpg,png|max:2048',
+            ]);
+         } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json(['erreur' => 'l\'un des conditions non valide '], 408);
+         }
 
          if ($request->hasFile('profil')) {
             $profil = $request->file('profil');
             $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
             $profil->move(public_path('images/clients/'), $imageName);
             $profilPath = "images/clients/" . $imageName;
-            } else {
+         } else {
             $profilPath = "Aucun Image Entrer🙄";
-            }
+         }
+         try {
+            $client = Client::create([
+               'nom_complet' => $request->nom_complet,
+               'cin' => $request->cin,
+               'tel' => $request->tel,
+               'email' => $request->email,
+               'adresse' => $request->adresse,
+               'profil' => $profilPath
+            ]);
+            return response()->json(['message' => $client], 201);
+         } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json(['erreur' => 'problemedans la creation de client '], 408);
+         }
+      } catch (\Throwable $th) {
+         //throw $th;
+         return response()->json(['error' => 'An error store client.', $th], 500);
+      }
+   }
 
-            $client->update([
+   /**
+    * Display the specified resource.
+    *
+    * @param  int  $id
+    * @return \Illuminate\Http\Response
+    */
+   public function show($id)
+   {
+      try {
+         $client = Client::where('IsDeleted', false)->find($id);
+         if ($client) {
+            return response()->json(['message' => $client], 200);
+         } else {
+            return response()->json(['message' => 'Client not found.'], 404);
+         }
+      } catch (\Throwable $th) {
+         //throw $th;
+         return response()->json(['error' => 'An error show client.', $th], 500);
+      }
+   }
+
+   /**
+    * Update the specified resource in storage.
+    *
+    * @param  \Illuminate\Http\Request  $request
+    * @param  int  $id
+    * @return \Illuminate\Http\Response
+    */
+   public function update(Request $request, $id)
+   {
+      try {
+         try {
+            $request->validate([
+               'nom_complet' => 'required|string|max:255',
+               'cin' => 'required|string|max:20|unique:clients,cin,' . $id,
+               'tel' => 'required|string|max:20',
+               'email' => 'required|email|unique:clients,email,' . $id,
+               'adresse' => 'required|string',
+               'profil' => 'nullable|file|mimes:jpg,png|max:2048',
+            ]);
+         } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json(['erreur' => 'l\'un des conditions non valide '], 408);
+         }
+         $client = Client::where('isDeleted', false)->find($id);
+         if ($client) {
+            // Upload de fichier
+
+            if ($request->hasFile('profil')) {
+               $profil = $request->file('profil');
+               $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
+               $profil->move(public_path('images/clients/'), $imageName);
+               $profilPath = "images/clients/" . $imageName;
+            } else {
+               $profilPath = "Aucun Image Entrer🙄";
+            }
+            try {
+               $client->update([
                   'nom_complet' => $request->nom_complet,
                   'cin' => $request->cin,
                   'tel' => $request->tel,
                   'email' => $request->email,
                   'adresse' => $request->adresse,
                   'profil' => $profilPath
-            ]);
+               ]);
 
-            return response()->json(['message' => 'Client updated successfully.'], 200);
+               return response()->json(['message' => 'Client updated successfully.'], 200);
+            } catch (\Throwable $th) {
+               //throw $th;
+               return response()->json(['erreur' => 'probleme dans la modification de client '], 408);
+            }
          }
          return response()->json(['message' => 'Client not found.'], 404);
+      } catch (\Throwable $th) {
+         //throw $th;
+         return response()->json(['error' => 'An error update client.', $th], 500);
+      }
+   }
 
-
-       } catch (\Throwable $th) {
-        //throw $th;
-        return response()->json(['error' => 'An error update client.',$th], 500);
-       }
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-       try {
+   /**
+    * Remove the specified resource from storage.
+    *
+    * @param  int  $id
+    * @return \Illuminate\Http\Response
+    */
+   public function destroy($id)
+   {
+      try {
          $client = Client::where('isDeleted', false)->find($id);
-    
-            if (!$client) {
-                return response()->json(['message' => 'Client non trouvée'], 404);
-            }
-    
-            $client->isDeleted = true;
-            $client->save();
-    
-            return response()->json(['message' => 'Client supprimée avec succès']);
-       } catch (\Throwable $th) {
-        //throw $th;
-        return response()->json(['error' => 'An error destroy client.',$th], 500);
-       }
-    }
+
+         if (!$client) {
+            return response()->json(['message' => 'Client non trouvée'], 404);
+         }
+
+         $client->isDeleted = true;
+         $client->save();
+
+         return response()->json(['message' => 'Client supprimée avec succès']);
+      } catch (\Throwable $th) {
+         //throw $th;
+         return response()->json(['error' => 'An error destroy client.', $th], 500);
+      }
+   }
 }
