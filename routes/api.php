@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\DemandeEmploiController;
 use App\Http\Controllers\Api\EmploieController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\MaterielController;
+use App\Http\Controllers\TypeMaterielController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -51,5 +53,11 @@ Route::post('/article/{id}', [ArticleController::class, 'update']);//quand on a 
 // ************************************************************************************************************************
 Route::apiResource('commande',CommandeController::class);
 Route::post('/commande/{id}', [CommandeController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
+Route::apiResource('typeMateriel',TypeMaterielController::class);
+Route::post('/typeMateriel/{id}', [TypeMaterielController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
+Route::apiResource('materiel',MaterielController::class);
+Route::post('/materiel/{id}', [MaterielController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
 // ************************************************************************************************************************
 

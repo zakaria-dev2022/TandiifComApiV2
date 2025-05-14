@@ -1,0 +1,144 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Models\Type_materiel;
+use Illuminate\Http\Request;
+
+class TypeMaterielController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+          try {
+            $type_materiel = Type_materiel::where('isDeleted', false)->get();
+            return response()->json($type_materiel, 200);
+        } catch (\Throwable $th) {
+            // throw $th;
+            return response()->json(["message" => "erreur index type_materiel", $th], 408);
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        try {
+            try {
+                $request->validate([
+                    'nom' => 'required|string|max:255|unique:type_materiels'
+                ]);
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json(['erreur' => 'l\'un des conditions non valide '], 408);
+            }
+            try {
+                $type_materiel = Type_materiel::create([
+                    'nom' => $request->nom
+                ]);
+                return response()->json(['message' => 'nouveau type_materiel enregistrée avec succès', 'type_materiel' => $type_materiel], 201);
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json(['erreur' => 'probleme de creation d\'eun type_materiel'], 408);
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json(["message" => "Erreur Store Type_materiel", $th], 408);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        try {
+            $type_materiel = Type_materiel::where('isDeleted', false)->find($id);
+
+            if ($type_materiel) {
+                return response()->json(['type_materiel' => $type_materiel], 200);
+            }
+            return response()->json(['message' => 'type_materiel Introuvable!'], 404);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json(["message" => "Erreur show type_materiel", $th], 408);
+        }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            try {
+                $request->validate([
+                    'nom' => 'required|string|max:255|unique:type_materiels'
+                    // 'nom' => 'required|string|max:255|unique:type_materiels,nom,' . $id
+                ]);
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json(['erreur' => 'l\'un des conditions non valide '], 408);
+            }
+
+            $type_materiel = Type_materiel::where('isDeleted', false)->find($id);
+            if ($type_materiel) {
+                try {
+                    $type_materiel->update([
+                        'nom' => $request->nom
+                    ]);
+                    // $type_materiel->save();
+                    return response()->json(['message' => 'modification d\'type_materiel enregistrée avec succès', 'type_materiel' => $type_materiel], 200);
+                } catch (\Throwable $th) {
+                    //throw $th;
+                    return response()->json(['erreur' => 'probleme dans la modification d\' un type_materiel '], 408);
+                }
+            }
+            return response()->json(['message' => 'type_materiel Introuvable!'], 404);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json(['message' => 'Erreur modification type_materiel', $th], 408);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        try {
+            $type_materiel = Type_materiel::where('isDeleted', false)->find($id);
+
+            if (!$type_materiel) {
+                return response()->json(['message' => 'Type_materiel non trouvée'], 404);
+            }
+
+            $type_materiel->isDeleted = true;
+            $type_materiel->save();
+
+            return response()->json(['message' => 'Type_materiel supprimée avec succès']);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json(['message' => 'Erreur lors de la suppression de l\'type_materiel', $th], 408);
+        }
+    }
+}
