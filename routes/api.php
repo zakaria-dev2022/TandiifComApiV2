@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\MaterielController;
 use App\Http\Controllers\TypeMaterielController;
+use App\Http\Controllers\typeVehiculeController;
+use App\Http\Controllers\vehiculeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -59,5 +61,11 @@ Route::post('/typeMateriel/{id}', [TypeMaterielController::class, 'update']);//q
 // ************************************************************************************************************************
 Route::apiResource('materiel',MaterielController::class);
 Route::post('/materiel/{id}', [MaterielController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
+Route::apiResource('vehicule',vehiculeController::class);
+Route::post('/vehicule/{id}', [VehiculeController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
+Route::apiResource('typeVehicule',typeVehiculeController::class);
+Route::post('/typeVehicule/{id}', [TypeVehiculeController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
 // ************************************************************************************************************************
 

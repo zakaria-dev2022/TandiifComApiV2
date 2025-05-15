@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Type_vehicule;
 use Illuminate\Http\Request;
 
-class typeVehiculeController extends Controller
+class TypeVehiculeController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -32,7 +32,7 @@ class typeVehiculeController extends Controller
      */
     public function store(Request $request)
     {
-         try {
+        try {
             try {
                 $request->validate([
                     'nom' => 'required|string|max:255|unique:type_vehicules'
@@ -125,7 +125,7 @@ class typeVehiculeController extends Controller
      */
     public function destroy($id)
     {
-        try {
+         try {
             $type_vehicule = Type_vehicule::where('isDeleted', false)->find($id);
 
             if (!$type_vehicule) {

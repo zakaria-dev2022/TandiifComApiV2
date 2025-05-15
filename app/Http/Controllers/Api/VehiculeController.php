@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\vehicule;
+use App\Models\Vehicule;
 use Illuminate\Http\Request;
 
-class vehiculeController extends Controller
+class VehiculeController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -16,7 +16,7 @@ class vehiculeController extends Controller
     public function index()
     {
         try {
-            $vehicule = vehicule::where('isDeleted', false)->get();
+            $vehicule = Vehicule::where('isDeleted', false)->get();
             return response()->json($vehicule, 200);
         } catch (\Throwable $th) {
             // throw $th;
@@ -75,6 +75,7 @@ class vehiculeController extends Controller
             return response()->json(["message" => "Erreur Store Vehicule", $th], 408);
         }
     }
+
 
     /**
      * Display the specified resource.
@@ -162,7 +163,7 @@ class vehiculeController extends Controller
      */
     public function destroy($id)
     {
-        try {
+         try {
             $vehicule = Vehicule::where('isDeleted', false)->find($id);
 
             if (!$vehicule) {
