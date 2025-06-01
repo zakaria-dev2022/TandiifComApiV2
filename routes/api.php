@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AffectationCommandeController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\CommandeController;
@@ -8,10 +9,10 @@ use App\Http\Controllers\Api\DemandeEmploiController;
 use App\Http\Controllers\Api\EmploieController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\TypeVehiculeController;
 use App\Http\Controllers\MaterielController;
 use App\Http\Controllers\TypeMaterielController;
-use App\Http\Controllers\typeVehiculeController;
-use App\Http\Controllers\vehiculeController;
+use App\Http\Controllers\VehiculeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -62,10 +63,13 @@ Route::post('/typeMateriel/{id}', [TypeMaterielController::class, 'update']);//q
 Route::apiResource('materiel',MaterielController::class);
 Route::post('/materiel/{id}', [MaterielController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
 // ************************************************************************************************************************
-Route::apiResource('vehicule',vehiculeController::class);
+Route::apiResource('vehicule',VehiculeController::class);
 Route::post('/vehicule/{id}', [VehiculeController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
 // ************************************************************************************************************************
 Route::apiResource('typeVehicule',typeVehiculeController::class);
 Route::post('/typeVehicule/{id}', [TypeVehiculeController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
+// ************************************************************************************************************************
+Route::apiResource('affectationCommande',AffectationCommandeController::class);
+Route::post('/affectationCommande/{id}', [AffectationCommandeController::class, 'update']);//quand on a besoin de mettre à jour un objet ; la difference entre ajouter et modifier c'est l'id dans l'url
 // ************************************************************************************************************************
 

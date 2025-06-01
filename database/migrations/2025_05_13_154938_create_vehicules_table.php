@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('matricule');
             $table->string('status');
             $table->string('image')->nullable();
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
 
             $table->foreign('type_id')->references('id')->on('type_vehicules')->onDelete('cascade');

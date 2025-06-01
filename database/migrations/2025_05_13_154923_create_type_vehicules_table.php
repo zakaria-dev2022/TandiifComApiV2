@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('type_vehicules', function (Blueprint $table) {
              $table->id();
             $table->string('nom');
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
         });
     }
