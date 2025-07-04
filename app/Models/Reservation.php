@@ -13,7 +13,8 @@ class Reservation extends Model
         'service_id',
         'date_reservation',
         'adresse',
-        'heure'
+        'heure',
+        'status'
     ];
 
     // Relations

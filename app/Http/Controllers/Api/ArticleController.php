@@ -38,7 +38,20 @@ class ArticleController extends Controller
                     'nom' => 'required|string|max:255|unique:articles',
                     'description' => 'required|string',
                     'prix' => 'required|numeric',
-                    'image' => 'nullable|file|mimes:jpg,png|max:2048'
+                    'image' => ['nullable', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['jpg', 'png'])) {
+                                $fail('Le fichier image doit être au format jpg ou png.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],
                 ]);
             } catch (\Throwable $th) {
                 //throw $th;
@@ -53,9 +66,13 @@ class ArticleController extends Controller
                 $imageName = time() . ' ' . $request->nom . '.' . $image->getClientOriginalExtension();
                 $image->move(public_path('images/articles/'), $imageName);
                 $imagePath = "images/articles/" . $imageName;
-            } else {
-                $imagePath = "Aucun Image Entrer🙄";
-            }
+            } elseif($request->image) {
+
+                    $imagePath = $request->image;
+                }else{
+
+                    $imagePath = "Aucun Image Entrer🙄";
+                }
 
             try {
                 $article = Article::create([
@@ -113,7 +130,20 @@ class ArticleController extends Controller
                     'nom' => 'required|string|max:255|unique:articles,nom,' . $id,
                     'description' => 'required|string',
                     'prix' => 'required|numeric',
-                    'image' => 'nullable|file|mimes:jpg,png|max:2048'
+                    'image' => ['nullable', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['jpg', 'png'])) {
+                                $fail('Le fichier image doit être au format jpg ou png.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],
                 ]);
             } catch (\Throwable $th) {
                 //throw $th;
@@ -129,7 +159,11 @@ class ArticleController extends Controller
                     $imageName = time() . ' ' . $request->nom . '.' . $image->getClientOriginalExtension();
                     $image->move(public_path('images/articles/'), $imageName);
                     $imagePath = "images/articles/" . $imageName;
-                } else {
+                } elseif($request->image) {
+
+                    $imagePath = $request->image;
+                }else{
+
                     $imagePath = "Aucun Image Entrer🙄";
                 }
                 try {

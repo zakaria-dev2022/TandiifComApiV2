@@ -19,6 +19,7 @@ class Emploie extends Model
         'copie_permis',
         'adresse',
         'matricule',
+        'status',
         'profil' // Photo de profil
     ];
 

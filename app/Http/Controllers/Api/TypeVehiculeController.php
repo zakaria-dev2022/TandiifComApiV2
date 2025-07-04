@@ -89,7 +89,7 @@ class TypeVehiculeController extends Controller
          try {
             try {
                 $request->validate([
-                    'nom' => 'required|string|max:255|unique:type_vehicules'
+                    'nom' => 'required|string|max:255|unique:type_vehicules,nom'. $id,
                     // 'nom' => 'required|string|max:255|unique:type_vehicules,nom,' . $id
                 ]);
             } catch (\Throwable $th) {

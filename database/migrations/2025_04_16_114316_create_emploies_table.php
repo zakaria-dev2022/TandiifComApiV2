@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('copie_cin');
             $table->string('copie_permis')->nullable();
             $table->text('adresse')->nullable();
+            $table->text('status')->default("Actif");
             $table->string('profil')->nullable(); // Photo de profil
             $table->boolean('isDeleted')->default(false);
             $table->timestamps();

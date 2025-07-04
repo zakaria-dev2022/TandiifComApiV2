@@ -11,10 +11,10 @@ class Client extends Model
 
     protected $fillable = [
         'nom_complet',
-        'cin',
+        // 'cin',
         'tel',
         'email',
-        'adresse',
+        // 'adresse',
         'profil',
     ];
     // Relation 

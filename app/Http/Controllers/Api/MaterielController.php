@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Materiel;
@@ -15,12 +15,36 @@ class MaterielController extends Controller
      */
     public function index()
     {
+        //   try {
+        //     $materiel = Materiel::where('isDeleted', false)->get();
+        //     return response()->json($materiel, 200);
+        // } catch (\Throwable $th) {
+        //     // throw $th;
+        //     return response()->json(["message" => "erreur index materiel", $th], 408);
+        // }
         try {
-            $materiel = Materiel::where('isDeleted', false)->get();
+            $materiel = Materiel::with('typeMateriel') // charge les données liées
+                ->where('isDeleted', false)
+                ->get();
+
+            // Optionnel : cacher la clé étrangère et ne retourner que le nom
+            $materiel = $materiel->map(function ($v) {
+                return [
+                    'id' => $v->id,
+                    'nom' => $v->nom,
+                    'type_materiel_id' => $v->typeMateriel->id, 
+                    'type_materiel_nom' => $v->typeMateriel->nom, 
+                    'description' => $v->description,
+                    'qte' => $v->qte, 
+                    'image' => $v->image, 
+                    'created_at' => $v->created_at,
+                    'updated_at' => $v->updated_at,
+                ];
+            });
+
             return response()->json($materiel, 200);
         } catch (\Throwable $th) {
-            // throw $th;
-            return response()->json(["message" => "erreur index materiel", $th], 408);
+            return response()->json(["message" => "erreur index materiel", "error" => $th->getMessage()], 408);
         }
     }
 
@@ -54,9 +78,13 @@ class MaterielController extends Controller
                 $imageName = time() . ' ' . $request->nom . '.' . $image->getClientOriginalExtension();
                 $image->move(public_path('images/materiels/'), $imageName);
                 $imagePath = "images/materiels/" . $imageName;
-            } else {
-                $imagePath = "Aucun Image Entrer🙄";
-            }
+            } elseif($request->image) {
+
+                    $imagePath = $request->image;
+                }else{
+
+                    $imagePath = "Aucun Image Entrer🙄";
+                }
 
             try {
                 $materiel = Materiel::create([
@@ -86,7 +114,7 @@ class MaterielController extends Controller
      */
     public function show($id)
     {
-        try {
+         try {
             $materiel = Materiel::where('isDeleted', false)->find($id);
 
             if ($materiel) {
@@ -108,7 +136,7 @@ class MaterielController extends Controller
      */
     public function update(Request $request, $id)
     {
-        try {
+         try {
             try {
                 $request->validate([
                     'nom' => 'required|string|max:255',
@@ -131,7 +159,11 @@ class MaterielController extends Controller
                     $imageName = time() . ' ' . $request->nom . '.' . $image->getClientOriginalExtension();
                     $image->move(public_path('images/materiels/'), $imageName);
                     $imagePath = "images/materiels/" . $imageName;
-                } else {
+                } elseif($request->image) {
+
+                    $imagePath = $request->image;
+                }else{
+
                     $imagePath = "Aucun Image Entrer🙄";
                 }
                 try {

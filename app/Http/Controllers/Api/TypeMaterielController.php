@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Type_materiel;
@@ -15,7 +15,7 @@ class TypeMaterielController extends Controller
      */
     public function index()
     {
-          try {
+        try {
             $type_materiel = Type_materiel::where('isDeleted', false)->get();
             return response()->json($type_materiel, 200);
         } catch (\Throwable $th) {

@@ -18,6 +18,7 @@ class DemandeDemploi extends Model
         'copie_cin',
         'copie_permis',
         'adresse',
+        'motivation',
         'profil' // Photo de profil
     ];
 }

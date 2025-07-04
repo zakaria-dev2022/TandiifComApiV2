@@ -37,11 +37,24 @@ class ClientController extends Controller
          try {
             $request->validate([
                'nom_complet' => 'required|string|max:255',
-               'cin' => 'required|string|max:20|unique:clients',
+               // 'cin' => 'required|string|max:20|unique:clients',
                'tel' => 'required|string|max:20',
                'email' => 'required|email|unique:clients',
-               'adresse' => 'required|string',
-               'profil' => 'nullable|file|mimes:jpg,png|max:2048',
+               // 'adresse' => 'required|string',
+               'profil' => ['nullable', function ($attribute, $value, $fail) {
+                  if (is_string($value)) {
+                     if (strlen($value) > 255) {
+                        $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                     }
+                  } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                     if (!in_array($value->getClientOriginalExtension(), ['jpg', 'png'])) {
+                        $fail('Le fichier image doit être au format jpg ou png.');
+                     }
+                     if ($value->getSize() > 2048 * 1024) {
+                        $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                     }
+                  }
+               }],
             ]);
          } catch (\Throwable $th) {
             //throw $th;
@@ -53,22 +66,25 @@ class ClientController extends Controller
             $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
             $profil->move(public_path('images/clients/'), $imageName);
             $profilPath = "images/clients/" . $imageName;
+         } elseif ($request->profil) {
+            $profilPath = $request->profil;
          } else {
+
             $profilPath = "Aucun Image Entrer🙄";
          }
          try {
             $client = Client::create([
                'nom_complet' => $request->nom_complet,
-               'cin' => $request->cin,
+               // 'cin' => $request->cin,
                'tel' => $request->tel,
                'email' => $request->email,
-               'adresse' => $request->adresse,
+               // 'adresse' => $request->adresse,
                'profil' => $profilPath
             ]);
             return response()->json(['message' => $client], 201);
          } catch (\Throwable $th) {
             //throw $th;
-            return response()->json(['erreur' => 'problemedans la creation de client '], 408);
+            return response()->json(['erreur' => 'probleme dans la creation de client ', $th], 408);
          }
       } catch (\Throwable $th) {
          //throw $th;
@@ -110,11 +126,26 @@ class ClientController extends Controller
          try {
             $request->validate([
                'nom_complet' => 'required|string|max:255',
-               'cin' => 'required|string|max:20|unique:clients,cin,' . $id,
+               // 'cin' => 'required|string|max:20|unique:clients,cin,' . $id,
                'tel' => 'required|string|max:20',
                'email' => 'required|email|unique:clients,email,' . $id,
-               'adresse' => 'required|string',
-               'profil' => 'nullable|file|mimes:jpg,png|max:2048',
+               // 'adresse' => 'required|string',
+               // 'profil' => 'nullable|file|mimes:jpg,png|max:2048',
+
+               'profil' => ['nullable', function ($attribute, $value, $fail) {
+                  if (is_string($value)) {
+                     if (strlen($value) > 255) {
+                        $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                     }
+                  } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                     if (!in_array($value->getClientOriginalExtension(), ['jpg', 'png'])) {
+                        $fail('Le fichier image doit être au format jpg ou png.');
+                     }
+                     if ($value->getSize() > 2048 * 1024) {
+                        $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                     }
+                  }
+               }],
             ]);
          } catch (\Throwable $th) {
             //throw $th;
@@ -129,16 +160,20 @@ class ClientController extends Controller
                $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
                $profil->move(public_path('images/clients/'), $imageName);
                $profilPath = "images/clients/" . $imageName;
+            } elseif ($request->profil) {
+
+               $profilPath = $request->profil;
             } else {
+
                $profilPath = "Aucun Image Entrer🙄";
             }
             try {
                $client->update([
                   'nom_complet' => $request->nom_complet,
-                  'cin' => $request->cin,
+                  // 'cin' => $request->cin,
                   'tel' => $request->tel,
                   'email' => $request->email,
-                  'adresse' => $request->adresse,
+                  // 'adresse' => $request->adresse,
                   'profil' => $profilPath
                ]);
 

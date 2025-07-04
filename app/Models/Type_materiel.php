@@ -12,6 +12,7 @@ class Type_materiel extends Model
 
     public function materiels()
     {
-        return $this->hasMany(Materiel::class);
+        // return $this->hasMany(Materiel::class);
+        return $this->hasMany(Materiel::class, 'type_materiel_id');
     }
 }

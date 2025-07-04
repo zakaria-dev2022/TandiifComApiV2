@@ -18,7 +18,7 @@ class DemandeEmploiController extends Controller
     {
         try {
             // $demandes = DemandeDemploi::all();
-            $demandes = DemandeDemploi::where('isDeleted', false)->get();
+            $demandes = DemandeDemploi::where('isDeleted', false)->orderBy('created_at', 'desc')->get();
             return response()->json($demandes, 200);
         } catch (\Throwable $th) {
             // throw $th;
@@ -35,23 +35,60 @@ class DemandeEmploiController extends Controller
     public function store(Request $request)
     {
         try {
-
-
-            //tester que les donner envoies il respecte les conditions demander (comme cin et email doit etre unique )  
             try {
                 $request->validate([
                     'nom_complet' => 'required|string|max:255',
-                    'cin' => 'required|string|max:20|unique:demandes_demplois',
+                    'cin' => 'required|string|max:20',
                     'tel' => 'required|string|max:20',
-                    'email' => 'required|email|unique:demandes_demplois',
-                    'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
-                    'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
+                    'email' => 'required|email',
+                    'copie_cin' => ['required', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['pdf'])) {
+                                $fail('Le fichier image doit être au format pdf.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],
+                'copie_permis' => ['nullable', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['pdf'])) {
+                                $fail('Le fichier image doit être au format pdf.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],
                     'adresse' => 'nullable|string',
-                    'profil' => 'nullable|file|mimes:jpg,png|max:2048'
+                    'motivation' => 'nullable|string',
+                    'profil' => ['nullable', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['jpg', 'png'])) {
+                                $fail('Le fichier image doit être au format jpg ou png.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],
                 ]);
             } catch (\Throwable $th) {
                 //throw $th;
-                return response()->json(['erreur' => 'l\'un des conditions non valide '],408);
+                return response()->json(['erreur' => 'l\'un des conditions non valide ',$th],408);
             }
 
 
@@ -62,26 +99,38 @@ class DemandeEmploiController extends Controller
                 $imageName = time() . $request->cin . '.' . $copieCin->getClientOriginalExtension();
                 $copieCin->move(public_path('images/demande_demployees/cin/'), $imageName);
                 $copieCinPath = "images/demande_demployees/cin/" . $imageName;
-            } else {
-                $copieCinPath = "Aucun Image Entrer🙄";
-            }
+            }  elseif($request->copie_cin) {
+
+                    $copieCinPath = $request->copie_cin;
+                }else{
+
+                    $copieCinPath = "Aucun Image Entrer🙄";
+                }
 
             if ($request->hasFile('copie_permis')) {
                 $copiePermis = $request->file('copie_permis');
                 $imageName = time() . $request->cin .  '.' . $copiePermis->getClientOriginalExtension();
                 $copiePermis->move(public_path('images/demande_demployees/permis/'), $imageName);
                 $copiePermisPath = "images/demande_demployees/permis/" . $imageName;
-            } else {
-                $copiePermisPath = "Aucun Image Entrer🙄";
-            }
+            }  elseif($request->copie_permis) {
+
+                    $copiePermisPath = $request->copie_permis;
+                }else{
+
+                    $copiePermisPath = "Aucun Image Entrer🙄";
+                }
             if ($request->hasFile('profil')) {
                 $profil = $request->file('profil');
                 $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
                 $profil->move(public_path('images/demande_demployees/profil/'), $imageName);
                 $profilPath = "images/demande_demployees/profil/" . $imageName;
-            } else {
-                $profilPath = "Aucun Image Entrer🙄";
-            }
+            }  elseif($request->profil) {
+
+                    $profilPath = $request->profil;
+                }else{
+
+                    $profilPath = "Aucun Image Entrer🙄";
+                }
 
             // Création de la demande
             $demande = DemandeDemploi::create([
@@ -92,6 +141,7 @@ class DemandeEmploiController extends Controller
                 'copie_cin' => $copieCinPath,
                 'copie_permis' => $copiePermisPath,
                 'adresse' => $request->adresse,
+                'motivation' => $request->motivation,
                 'profil' => $profilPath
             ]);
 
@@ -135,15 +185,54 @@ class DemandeEmploiController extends Controller
     {
         try {
             try {
-                $request->validate([
+               $request->validate([
                     'nom_complet' => 'required|string|max:255',
-                    'cin' => 'required|string|max:20|unique:demandes_demplois,cin,' . $id,
+                    'cin' => 'required|string|max:20',
                     'tel' => 'required|string|max:20',
-                    'email' => 'required|email|unique:demandes_demplois,email,' . $id,
-                    'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
-                    'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
+                    'email' => 'required|email',
+                    'copie_cin' => ['required', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['pdf'])) {
+                                $fail('Le fichier image doit être au format pdf.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],
+                'copie_permis' => ['nullable', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['pdf'])) {
+                                $fail('Le fichier image doit être au format pdf.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],
                     'adresse' => 'nullable|string',
-                    'profil' => 'nullable|file|mimes:jpg,png|max:2048'
+                    'profil' => ['nullable', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['jpg', 'png'])) {
+                                $fail('Le fichier image doit être au format jpg ou png.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],
                 ]);
             } catch (\Throwable $th) {
                 //throw $th;
@@ -161,7 +250,11 @@ class DemandeEmploiController extends Controller
                     $imageName = time() . $request->cin . '.' . $copieCin->getClientOriginalExtension();
                     $copieCin->move(public_path('images/demande_demployees/cin/'), $imageName);
                     $copieCinPath = "images/demande_demployees/cin/" . $imageName;
-                } else {
+                }  elseif($request->copie_cin) {
+
+                    $copieCinPath = $request->copie_cin;
+                }else{
+
                     $copieCinPath = "Aucun Image Entrer🙄";
                 }
 
@@ -172,7 +265,11 @@ class DemandeEmploiController extends Controller
                     $imageName = time() . $request->cin . '.' . $copiePermis->getClientOriginalExtension();
                     $copiePermis->move(public_path('images/demande_demployees/permis/'), $imageName);
                     $copiePermisPath = "images/demande_demployees/permis/" . $imageName;
-                } else {
+                }  elseif($request->copie_permis) {
+
+                    $copiePermisPath = $request->copie_permis;
+                }else{
+
                     $copiePermisPath = "Aucun Image Entrer🙄";
                 }
 
@@ -183,7 +280,11 @@ class DemandeEmploiController extends Controller
                     $imageName = time() . $request->cin . '.' . $profil->getClientOriginalExtension();
                     $profil->move(public_path('images/demande_demployees/profil/'), $imageName);
                     $profilPath = "images/demande_demployees/profil/" . $imageName;
-                } else {
+                }  elseif($request->profil) {
+
+                    $profilPath = $request->profil;
+                }else{
+
                     $profilPath = "Aucun Image Entrer🙄";
                 }
 
@@ -195,6 +296,7 @@ class DemandeEmploiController extends Controller
                     'copie_cin' => $copieCinPath,
                     'copie_permis' => $copiePermisPath,
                     'adresse' => $request->adresse,
+                    'motivation' => $request->motivation,
                     'profil' => $profilPath
 
                 ]);
@@ -244,19 +346,59 @@ class DemandeEmploiController extends Controller
             }
 
             try {
-                $demande->validate([
-                    'nom_complet' => 'required|string|max:255',
-                    'cin' => 'required|string|max:20|unique:emploies,cin',
-                    'tel' => 'required|string|max:20',
-                    'email' => 'required|email|unique:emploies,email',
-                    'copie_cin' => 'required|file|mimes:pdf,jpg,png|max:2048',
-                    'copie_permis' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
-                    'adresse' => 'nullable|string',
-                    'profil' => 'nullable|file|mimes:jpg,png|max:2048'
-                ]);
+                // $demande->validate([
+                //     'nom_complet' => 'required|string|max:255',
+                //     // 'cin' => 'required|string|max:20|unique:emploies,cin',
+                //     'tel' => 'required|string|max:20',
+                //     // 'email' => 'required|email|unique:emploies,email',
+                //     'copie_cin' => ['required', function ($attribute, $value, $fail) {
+                //         if (is_string($value)) {
+                //             if (strlen($value) > 255) {
+                //                 $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                //             }
+                //         } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                //             if (!in_array($value->getClientOriginalExtension(), ['pdf'])) {
+                //                 $fail('Le fichier image doit être au format pdf.');
+                //             }
+                //             if ($value->getSize() > 2048 * 1024) {
+                //                 $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                //             }
+                //         } 
+                //     }],
+                //      'copie_permis' => ['nullable', function ($attribute, $value, $fail) {
+                //         if (is_string($value)) {
+                //             if (strlen($value) > 255) {
+                //                 $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                //             }
+                //         } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                //             if (!in_array($value->getClientOriginalExtension(), ['pdf'])) {
+                //                 $fail('Le fichier image doit être au format pdf.');
+                //             }
+                //             if ($value->getSize() > 2048 * 1024) {
+                //                 $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                //             }
+                //         } 
+                //     }],
+                //     'adresse' => 'nullable|string',
+                //     'profil' => ['nullable', function ($attribute, $value, $fail) {
+                //         if (is_string($value)) {
+                //             if (strlen($value) > 255) {
+                //                 $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                //             }
+                //         } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                //             if (!in_array($value->getClientOriginalExtension(), ['jpg', 'png'])) {
+                //                 $fail('Le fichier image doit être au format jpg ou png.');
+                //             }
+                //             if ($value->getSize() > 2048 * 1024) {
+                //                 $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                //             }
+                //         } 
+                //     }],
+                
+                // ]);
 
 
-                $demande = Emploie::create([
+                $nouveau_emploie = Emploie::create([
                     'nom_complet' => $demande->nom_complet,
                     'cin' => $demande->cin,
                     'tel' => $demande->tel,
@@ -266,7 +408,9 @@ class DemandeEmploiController extends Controller
                     'adresse' => $demande->adresse,
                     'profil' => $demande->profil
                 ]);
-                return response()->json(['message' => 'Donnees envoyées avec succès'], 200);
+                $demande->delete();
+                
+                return response()->json(['message' => 'Donnees envoyées avec succès',$nouveau_emploie], 200);
             } catch (\Throwable $th) {
                 //throw $th;
                 return response()->json(['erreur' => 'l\'un des conditions non valide '],408);

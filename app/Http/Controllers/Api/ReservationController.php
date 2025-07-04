@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AffectationReservation;
 use App\Models\Reservation;
+use Illuminate\Console\View\Components\Alert;
 use Illuminate\Http\Request;
 
 class ReservationController extends Controller
@@ -16,11 +18,29 @@ class ReservationController extends Controller
     public function index()
     {
         try {
-            $reservation = Reservation::where('isDeleted', false)->get();
-            return response()->json($reservation, 200);
-        } catch (\Throwable $th) {
-            // throw $th;
-            return response()->json(["message" => "erreur index reservation", $th], 408);
+            $reservations = Reservation::with(['client', 'service'])
+                ->where('isDeleted', false) // si tu gères une suppression logique
+                ->get();
+
+            $formatted = $reservations->map(function ($reservation) {
+                return [
+                    'id' => $reservation->id,
+                    'client_id' => $reservation->client->id,
+                    'client_nom_complet' => $reservation->client->nom_complet,
+                    'client_tel' => $reservation->client->tel,
+                    'service_id' => $reservation->service->id,
+                    'service_prix' => $reservation->service->prix,
+                    'service_nom' => $reservation->service->nom,
+                    'date_reservation' => $reservation->date_reservation,
+                    'heure' => $reservation->heure,
+                    'adresse' => $reservation->adresse,
+                    'status' => $reservation->status,
+                ];
+            });
+
+            return response()->json($formatted, 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erreur lors de la récupération des réservations.'], 500);
         }
     }
 
@@ -39,7 +59,7 @@ class ReservationController extends Controller
                     'service_id' => 'required|exists:services,id',
                     'date_reservation' => 'required|date',
                     'adresse' => 'required|string|max:255',
-                    'heure' => 'required|date_format:H:i',
+                    'heure' => 'required',
                 ]);
             } catch (\Throwable $th) {
                 //throw $th;
@@ -50,9 +70,10 @@ class ReservationController extends Controller
                 $reservation = Reservation::create([
                     'client_id' => $request->client_id,
                     'service_id' => $request->service_id,
-                    'date_reservation' =>$request->date_reservation,
+                    'date_reservation' => $request->date_reservation,
                     'adresse' => $request->adresse,
-                    'heure' => $request->heure
+                    'heure' => $request->heure,
+                    // 'status' => $request->status
 
                 ]);
                 return response()->json(['message' => 'nouveau reservation enregistrée avec succès', 'reservation' => $reservation], 201);
@@ -103,7 +124,8 @@ class ReservationController extends Controller
                     'service_id' => 'required|exists:services,id',
                     'date_reservation' => 'required|date',
                     'adresse' => 'required|string|max:255',
-                    'heure' => 'required|date_format:H:i',
+                    'heure' => 'required',
+                    'status' => 'required|string',
                 ]);
             } catch (\Throwable $th) {
                 //throw $th;
@@ -111,16 +133,28 @@ class ReservationController extends Controller
             }
 
             $reservation = Reservation::where('isDeleted', false)->find($id);
+
+
             if ($reservation) {
                 try {
+                    $ancienStatus = $reservation->status;
+                    $nouveauStatus = $request->status;
                     $reservation->update([
-                       'client_id' => $request->client_id,
-                    'service_id' => $request->service_id,
-                    'date_reservation' =>$request->date_reservation,
-                    'adresse' => $request->adresse,
-                    'heure' => $request->heure
+                        'client_id' => $request->client_id,
+                        'service_id' => $request->service_id,
+                        'date_reservation' => $request->date_reservation,
+                        'adresse' => $request->adresse,
+                        'heure' => $request->heure,
+                        'status' => $request->status
+                        // 'status' => $request->status
                     ]);
-                    return response()->json(['message' => 'modification d\'reservation enregistrée avec succès', 'reservation' => $reservation], 200);
+                    // Suppression logique de l'affectation si le status a changé
+                    if ($request->status !== "Affecter") {
+                       $suppressionAffectation = AffectationReservation::where('reservation_id', $reservation->id)
+                            ->update(['isDeleted' => true]); // suppression logique
+                    }
+
+                    return response()->json(['message' => 'modification d\'reservation enregistrée avec succès', 'suppressionAffectation' => $suppressionAffectation, 'reservation' => $reservation], 200);
                 } catch (\Throwable $th) {
                     //throw $th;
                     return response()->json(['erreur' => 'probleme dans la modification d\' un reservation '], 408);

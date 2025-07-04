@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vehicule;
@@ -15,12 +15,37 @@ class VehiculeController extends Controller
      */
     public function index()
     {
+        //  try {
+        //     $vehicule = Vehicule::where('isDeleted', false)->get();
+        //     return response()->json($vehicule, 200);
+        // } catch (\Throwable $th) {
+        // //     // throw $th;
+        //     return response()->json(["message" => "erreur index vehicule", $th], 408);
+        // }
+
         try {
-            $vehicule = Vehicule::where('isDeleted', false)->get();
+            $vehicule = Vehicule::with('type') // charge les données liées
+                ->where('isDeleted', false)
+                ->get();
+
+            // Optionnel : cacher la clé étrangère et ne retourner que le nom
+            $vehicule = $vehicule->map(function ($v) {
+                return [
+                    'id' => $v->id,
+                    'marque' => $v->marque,
+                    'type_vehicule_id' => $v->type->id, 
+                    'type_vehicule_nom' => $v->type->nom, 
+                    'matricule' => $v->matricule,
+                    'status' => $v->status, 
+                    'image' => $v->image, 
+                    'created_at' => $v->created_at,
+                    'updated_at' => $v->updated_at,
+                ];
+            });
+
             return response()->json($vehicule, 200);
         } catch (\Throwable $th) {
-            // throw $th;
-            return response()->json(["message" => "erreur index vehicule", $th], 408);
+            return response()->json(["message" => "erreur index vehicule", "error" => $th->getMessage()], 408);
         }
     }
 
@@ -36,10 +61,23 @@ class VehiculeController extends Controller
             try {
                 $request->validate([
                     'marque' => 'required|string|max:255',
-                    'type_vehicule_id' => 'required|exists:type_vehicule,id',
-                    'matricule' => 'required|string|max:255|unique:vehicule',
+                    // 'type_vehicule' => 'required|exists:type_vehicules,id',
+                    'matricule' => 'required|string|max:255|unique:vehicules',
                     'status' => 'required|string|max:255',
-                    'image' => 'nullable|string|max:255'
+                    'image' => ['nullable', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['jpg', 'png'])) {
+                                $fail('Le fichier image doit être au format jpg ou png.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],            
                 ]);
             } catch (\Throwable $th) {
                 //throw $th;
@@ -50,20 +88,24 @@ class VehiculeController extends Controller
 
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
-                $imageName = time() . ' ' . $request->nom . '.' . $image->getClientOriginalExtension();
+                $imageName = time() . ' ' . $request->matricule . '.' . $image->getClientOriginalExtension();
                 $image->move(public_path('images/vehicules/'), $imageName);
                 $imagePath = "images/vehicules/" . $imageName;
-            } else {
-                $imagePath = "Aucun Image Entrer🙄";
-            }
+            } elseif($request->image) {
+
+                    $imagePath = $request->image;
+                }else{
+
+                    $imagePath = "Aucun Image Entrer🙄";
+                }   
 
             try {
                 $vehicule = Vehicule::create([
                     'marque' => $request->marque,
-                    'type_vehicule_id' => $request->type_vehicule_id,
+                    'type_id' => $request->type_vehicule,
                     'matricule' => $request->matricule,
                     'status' => $request->status,
-                    'imaage' => $imagePath
+                    'image' => $imagePath
                 ]);
                 return response()->json(['message' => 'nouveau vehicule enregistrée avec succès', 'vehicule' => $vehicule], 201);
             } catch (\Throwable $th) {
@@ -75,7 +117,6 @@ class VehiculeController extends Controller
             return response()->json(["message" => "Erreur Store Vehicule", $th], 408);
         }
     }
-
 
     /**
      * Display the specified resource.
@@ -110,11 +151,24 @@ class VehiculeController extends Controller
         try {
             try {
                 $request->validate([
-                   'marque' => 'required|string|max:255',
-                    'type_vehicule_id' => 'required|exists:type_vehicule,id',
-                    'matricule' => 'required|string|max:255|unique:vehicule',
+                    'marque' => 'required|string|max:255',
+                    'type_vehicule' => 'required|exists:type_vehicules,id',
+                    'matricule' => 'required|string|max:255|unique:vehicules,matricule,' . $id,
                     'status' => 'required|string|max:255',
-                    'image' => 'nullable|string|max:255'
+                    'image' => ['nullable', function ($attribute, $value, $fail) {
+                        if (is_string($value)) {
+                            if (strlen($value) > 255) {
+                                $fail('L’image en tant que chaîne de caractères ne doit pas dépasser 255 caractères.');
+                            }
+                        } elseif ($value instanceof \Illuminate\Http\UploadedFile) {
+                            if (!in_array($value->getClientOriginalExtension(), ['jpg', 'png'])) {
+                                $fail('Le fichier image doit être au format jpg ou png.');
+                            }
+                            if ($value->getSize() > 2048 * 1024) {
+                                $fail('Le fichier image ne doit pas dépasser 2 Mo.');
+                            }
+                        } 
+                    }],
                 ]);
             } catch (\Throwable $th) {
                 //throw $th;
@@ -130,16 +184,20 @@ class VehiculeController extends Controller
                     $imageName = time() . ' ' . $request->nom . '.' . $image->getClientOriginalExtension();
                     $image->move(public_path('images/vehicules/'), $imageName);
                     $imagePath = "images/vehicules/" . $imageName;
-                } else {
+                } elseif($request->image) {
+
+                    $imagePath = $request->image;
+                }else{
+
                     $imagePath = "Aucun Image Entrer🙄";
                 }
                 try {
                     $vehicule->update([
                         'marque' => $request->marque,
-                        'type_vehicule_id' => $request->type_vehicule_id,
+                        'type_id' => $request->type_vehicule,
                         'matricule' => $request->matricule,
                         'status' => $request->status,
-                        'imaage' => $imagePath
+                        'image' => $imagePath
                     ]);
                     // $vehicule->save();
                     return response()->json(['message' => 'modification d\'vehicule enregistrée avec succès', 'vehicule' => $vehicule], 200);
@@ -163,7 +221,7 @@ class VehiculeController extends Controller
      */
     public function destroy($id)
     {
-         try {
+        try {
             $vehicule = Vehicule::where('isDeleted', false)->find($id);
 
             if (!$vehicule) {
